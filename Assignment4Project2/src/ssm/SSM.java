@@ -35,13 +35,22 @@ public class SSM extends HttpServlet {
 	 */
 	public SSM() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
 		sessionMap = new HashMap<String, SessionInfo>();
+		RPCServer rpcServer = new  RPCServer(sessionMap);
+		Thread server = new Thread(rpcServer);
+		server.start();
+		
+		RPCClient rpcClient = new RPCClient();
+		
+		Members members = new Members();
+		GMClient gmClient = new GMClient(members);
+		Thread gmThread = new Thread(gmClient);
+		gmThread.start();
 	}
 
 	/**
