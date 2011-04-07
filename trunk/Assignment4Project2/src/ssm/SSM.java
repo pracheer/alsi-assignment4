@@ -159,8 +159,11 @@ public class SSM extends HttpServlet {
 						}
 						
 						
+						// remove myself from the list.
+						members.removeMember(me);
+						
 						if(!found && sessionId != null ) {
-							ssmStub.get(sessionId, version, locations);
+							ssmStub.get(sessionId, version, members);
 							if(sessionMap.containsKey(sessionId)) {
 								sessionInfo = sessionMap.get(sessionId);
 								if(version != sessionInfo.getVersion()) {

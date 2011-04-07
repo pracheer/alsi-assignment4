@@ -38,7 +38,7 @@ public class GMClient implements Runnable {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		Member myInfo = SsmUtil.getInstance().getMySocketInfo();
+		Member myInfo = SSMUtil.getInstance().getMySocketInfo();
 		int  myPos = 0;
 		Vector<Member> groupMembers = members.getMembers();
 		for (Member member : groupMembers) {
@@ -55,7 +55,7 @@ public class GMClient implements Runnable {
 		}
 		int rand;
 		do{
-			rand = SsmUtil.getInstance().getRandomNumberInRange(0, size);
+			rand = SSMUtil.getInstance().getRandomNumberInRange(0, size);
 		}while(rand != myPos);
 		
 		byte[] buf = new byte[256];
@@ -73,16 +73,16 @@ public class GMClient implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		SsmUtil.getInstance().setWaitingMember(groupMembers.get(rand));
+		SSMUtil.getInstance().setWaitingMember(groupMembers.get(rand));
 		try {
-			Thread.sleep(SsmUtil.getInstance().getTimeOut());
+			Thread.sleep(SSMUtil.getInstance().getTimeOut());
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		if(SsmUtil.getInstance().getWaitingMember()!=null)
+		if(SSMUtil.getInstance().getWaitingMember()!=null)
 		{
 			members.removeMember(groupMembers.get(rand));
-			SsmUtil.getInstance().cleanWaitingMember();
+			SSMUtil.getInstance().cleanWaitingMember();
 		}
 	}
 

@@ -8,7 +8,7 @@ import java.util.Random;
  *
  */
 
-public class SsmUtil {
+public class SSMUtil {
 
 	Member myInfo;
 	public static final int port = 1000;
@@ -18,9 +18,9 @@ public class SsmUtil {
 	Member waitingForMember = null;
 	
 	
-	static SsmUtil instance = new SsmUtil();
+	static SSMUtil instance = new SSMUtil();
 	
-	SsmUtil(){
+	SSMUtil(){
 		try {
 			myInfo = new Member(java.net.InetAddress.getLocalHost().getAddress().toString(), port);
 		} catch (UnknownHostException e) {
@@ -33,7 +33,7 @@ public class SsmUtil {
 		return myInfo;
 	}
 	
-	public static SsmUtil getInstance()
+	public static SSMUtil getInstance()
 	{
 		return instance;
 	}
