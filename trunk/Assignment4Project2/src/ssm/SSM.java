@@ -169,11 +169,6 @@ public class SSM extends HttpServlet {
 		}
 	}
 
-	private void choose(int w, Members members2) {
-		// TODO Auto-generated method stub
-
-	}
-
 	private String handleError(String str) {
 		StringBuffer buf = new StringBuffer();
 		buf.append("An Error has occurred");
