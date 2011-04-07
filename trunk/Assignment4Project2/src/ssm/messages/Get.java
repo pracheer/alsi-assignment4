@@ -3,23 +3,23 @@ package ssm.messages;
 public class Get implements Message{
 
 	private String sessionId;
-	private String version;
-
+	private int version;
+	
 	public String getSessionId() {
 		return sessionId;
 	}
-	public String getVersion() {
+	public int getVersion() {
 		return version;
 	}
 	
-	public Get(String sessionId, String version) {
+	public Get(String sessionId, int version) {
 		this.sessionId = sessionId;
 		this.version = version;
 	}
 	
 	public static Get fromString(String string) {
 		String[] strings = string.split(SEPARATOR);
-		return new Get(strings[0], strings[1]);
+		return new Get(strings[0], Integer.parseInt(strings[1]));
 	}
 	
 	@Override

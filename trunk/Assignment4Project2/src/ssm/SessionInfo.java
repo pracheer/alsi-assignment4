@@ -33,6 +33,10 @@ public class SessionInfo {
 	
 	public SessionInfo(Value value) {
 		super();
+		construct(value);
+	}
+
+	private void construct(Value value) {
 		try {
 		InetAddress addr = InetAddress.getLocalHost();
 		this.sessionId = addr.getHostAddress() + System.nanoTime();
@@ -45,11 +49,19 @@ public class SessionInfo {
 		}
 	}
 	
+	public SessionInfo(Value value, int version) {
+		construct(value);
+		this.version = version;
+	}
+	
 	public String getSessionId() {
 		return sessionId;
 	}
 	public int getVersion() {
 		return version;
+	}
+	public void setVersion(int version) {
+		this.version = version;
 	}
 	public long getTimestamp() {
 		return timestamp;

@@ -13,12 +13,14 @@ import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
 import ssm.Operation.OpCode;
 import ssm.messages.Get;
 import ssm.messages.Message;
+import ssm.messages.Put;
 
 public class RPCServer implements Runnable {
 
 	DatagramSocket rpcSocket;
 	byte[] buffer;
 	private HashMap<String, SessionInfo> sessionMap;
+	public static String INVALID_VERSION = "Invalid Version found";
 
 	public RPCServer(HashMap<String, SessionInfo> sessionMap) {
 		this.sessionMap = sessionMap;
@@ -37,18 +39,18 @@ public class RPCServer implements Runnable {
 				rpcSocket.receive(recvPkt);
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
-				
+
 				// here inBuf contains the callID and operationCode
-			    byte[] outBuf = computeResponse(recvPkt.getData(), recvPkt.getLength());
-			    // here outBuf should contain the callID
-			    DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length,
-			    	returnAddr, returnPort);
-			    rpcSocket.send(sendPkt);
-			  
-//				                        					byte[] buf;
-//					Member m = getMemberFromBuffer(buffer);
-//					DatagramPacket packet = new DatagramPacket(buf, buf.length, 
-//							InetAddress.getByName(m.getIpAddress()), m.getPort());
+				byte[] outBuf = computeResponse(recvPkt.getData(), recvPkt.getLength());
+				// here outBuf should contain the callID
+				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length,
+						returnAddr, returnPort);
+				rpcSocket.send(sendPkt);
+
+				//				                        					byte[] buf;
+				//					Member m = getMemberFromBuffer(buffer);
+				//					DatagramPacket packet = new DatagramPacket(buf, buf.length, 
+				//							InetAddress.getByName(m.getIpAddress()), m.getPort());
 			}
 
 		} catch (SocketException e) {
@@ -59,33 +61,58 @@ public class RPCServer implements Runnable {
 
 	}
 
-	private byte[] computeResponse(byte[] data, int length) {
+	private Operation computeResponseOperation(byte[] data, int length) {
+
 		Operation operation = Operation.fromString(new String(data));
+		Message message = operation.getMessage();
+
 		if(operation.getOpCode() == OpCode.PING) {
 			// return the same thing again.
-			return operation.toString().getBytes();
+			return operation;
 		}
+
 		if(operation.getOpCode() == OpCode.GET) {
-			Message message = operation.getMessage();
 			if(message instanceof Get) {
 				Get getMsg = (Get)message;
 				if(sessionMap.containsKey(getMsg.getSessionId())) {
 					SessionInfo sessionInfo = sessionMap.get(getMsg.getSessionId());
 					synchronized (sessionInfo) {
 						if(sessionInfo.getVersion() == getMsg.getVersion()) {
+							Value value = sessionInfo.getValue();
 							
+							return value.toString().getBytes();
 						}
 						else {
-							
+							return INVALID_VERSION.getBytes();
 						}
 					}
 				}
 			}
 		}
+
 		if(operation.getOpCode() == OpCode.PUT) {
-			
+			if(message instanceof Put) {
+				Put putMsg = (Put)message;
+				SessionInfo newSessionInfo = new SessionInfo(putMsg.getValue(), putMsg.getVersion());
+				if(sessionMap.containsKey(putMsg.getSessionId())) {
+					SessionInfo sessionInfo = sessionMap.get(putMsg.getSessionId());
+					synchronized(sessionInfo) {
+						sessionMap.put(putMsg.getSessionId(), newSessionInfo);
+					}
+				}
+				else {
+					sessionMap.put(putMsg.getSessionId(), newSessionInfo);
+				}
+				
+				
+			}
 		}
 		return null;
+	
+	}
+	private byte[] computeResponse(byte[] data, int length) {
+		Operation operation = computeResponseOperation(data, length);
+		return operation.toString().getBytes();
 	}
 
 }
