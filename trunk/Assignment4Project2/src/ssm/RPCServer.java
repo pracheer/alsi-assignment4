@@ -8,6 +8,8 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import ssm.Operation.OpCode;
+
 public class RPCServer implements Runnable {
 
 	DatagramSocket rpcSocket;
@@ -48,14 +50,23 @@ public class RPCServer implements Runnable {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 	}
 
 	private byte[] computeResponse(byte[] data, int length) {
-		
+		Operation operation = Operation.fromString(new String(data));
+		if(operation.getOpCode() == OpCode.PING) {
+			return operation.toString().getBytes();
+		}
+		if(operation.getOpCode() == OpCode.GET) {
+			
+		}
+		if(operation.getOpCode() == OpCode.PUT) {
+			
+		}
+		return null;
 	}
 
 }
