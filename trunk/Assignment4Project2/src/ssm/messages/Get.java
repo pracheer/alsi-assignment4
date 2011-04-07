@@ -5,6 +5,13 @@ public class Get implements Message{
 	private String sessionId;
 	private String version;
 
+	public String getSessionId() {
+		return sessionId;
+	}
+	public String getVersion() {
+		return version;
+	}
+	
 	public Get(String sessionId, String version) {
 		this.sessionId = sessionId;
 		this.version = version;
