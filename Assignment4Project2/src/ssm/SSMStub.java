@@ -89,4 +89,9 @@ public class SSMStub {
 		return null;
 	}
 
+	public void remove(String sessionId, int version, Members members) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
