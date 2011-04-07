@@ -50,7 +50,7 @@ public class GMClient implements Runnable {
 		if(myPos == groupMembers.size())
 		{
 			groupMembers.add(myInfo);
-			members.addNewMember(myInfo);
+			members.add(myInfo);
 			size++;
 		}
 		int rand;
@@ -81,7 +81,7 @@ public class GMClient implements Runnable {
 		}
 		if(SSMUtil.getInstance().getWaitingMember()!=null)
 		{
-			members.removeMember(groupMembers.get(rand));
+			members.remove(groupMembers.get(rand));
 			SSMUtil.getInstance().cleanWaitingMember();
 		}
 	}

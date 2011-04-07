@@ -87,7 +87,7 @@ public class SSM extends HttpServlet {
 			// First access
 			if(cookies == null || cookies.length == 0 ) {
 				count = 1;
-				sessionInfo = createNewSession(count);
+				sessionInfo = SessionInfo.create(new Value(count));
 			}
 			else {
 				// repeated access.
@@ -108,107 +108,48 @@ public class SSM extends HttpServlet {
 						Members locationMembers = Members.fromString(locationString);
 
 						if(request.getParameter("logout")!=null) {
-							ssmStub.remove(sessionId, version, members);
+							ssmStub.remove(sessionId, version, locationMembers);
 							out.write(createHTML("Bye!"));
 							return;
 						}
 
-						boolean found = locationMembers.search(me);
-						// search in local database.
-						if(found) {
-							if(sessionMap.containsKey(sessionId)) {
-								sessionInfo = sessionMap.get(sessionId);
-								if(version != sessionInfo.getVersion()) {
-									out.write(handleError("Invalid Version Number"));
-									return;
-								}
-								else if (System.currentTimeMillis() > sessionInfo.getTimestamp()) {
-									count = 1;
-									sessionInfo = createNewSession(count);
-								} 
-								else {
-									synchronized(sessionInfo) {
-										// synchronization on the session object.
-										Value value = sessionInfo.getValue();
-										if(request.getParameter("replace")!=null) {
-											String message = request.getParameter("message");
-											value.setMsg(message);
-										}
-										count = value.getCount();
-										count++;
-										value.setCount(count);
-										sessionInfo.setValue(value);
-
-										String cookieVal = sessionInfo.getSessionId()+SEPARATOR+sessionInfo.getVersion()+SEPARATOR+sessionInfo.getLocation();
-										if(cookieVal.length() > 1024) {
-											out.write(handleError("Cookie size exceeded."));
-											return;
-										}
-										Cookie newCookie = new Cookie(COOKIE_NAME, cookieVal); 
-										response.addCookie(newCookie);
-										out.write(assign3HTML("(" + value.getCount() + ")" + " " + value.getMsg()));
-										sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
-										return;
-									}
-								}
-							}
-							else {
-								count = 1;
-								sessionInfo = createNewSession(count);
-							}
+						// TODO: check in local cache if data present.
+						Value value = ssmStub.get(sessionId, version, members);
+						version++;
+						
+						if(value == null)
+							value = new Value(1);
+						else
+							value.setCount(value.getCount()+1);
+						
+						if(request.getParameter("replace")!=null) {
+							String message = request.getParameter("message");
+							value.setMsg(message);
 						}
-
-						// TODO write to W - 1 servers.
-
-						// remove myself from the list.
-
-						if(!found && sessionId != null ) {
-							members.removeMember(me);
-							if(request.getParameter("logout")!=null) {
-								ssmStub.get(sessionId, version, members);
-								sessionMap.remove(sessionInfo.getSessionId());
-								out.write(createHTML("Bye!"));
-								return;
-							}
-							Value value = ssmStub.get(sessionId, version, members);
-
-							if(request.getParameter("replace")!=null) {
-								String message = request.getParameter("message");
-								value.setMsg(message);
-							}
-							count = value.getCount();
-							count++;
-							value.setCount(count);
-							sessionInfo.setValue(value);
-
-							String cookieVal = sessionInfo.getSessionId()+SEPARATOR+sessionInfo.getVersion()+SEPARATOR+sessionInfo.getLocation();
-							if(cookieVal.length() > 1024) {
-								out.write(handleError("Cookie size exceeded."));
-								return;
-							}
-							Cookie newCookie = new Cookie(COOKIE_NAME, cookieVal); 
-							response.addCookie(newCookie);
-							out.write(assign3HTML("(" + value.getCount() + ")" + " " + value.getMsg()));
-							sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
-							return;
-						}
-						else {
-							if(sessionId == null ) {
-								out.write(handleError("Session Id cannot be null. Please check your request"));
-								return;
-							}
-						}
+						
+						sessionInfo = new SessionInfo(sessionId, version, value);
 					}
 				}
-
-
-				Cookie cookie = new Cookie(COOKIE_NAME, 
-						sessionInfo.getSessionId()+SEPARATOR+sessionInfo.getVersion()+SEPARATOR+sessionInfo.getLocation()); 
-				response.addCookie(cookie);
-				Value value = sessionInfo.getValue();
-				out.write(assign3HTML("(" + value.getCount() + ")" + " " + value.getMsg()));
-				sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
 			}
+
+			sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
+			
+			Value value = sessionInfo.getValue();
+			// write to W members.
+			Members wMembers = ssmStub.put(sessionInfo.getSessionId(), sessionInfo.getVersion(), members, 
+					Constants.W-1, Constants.WQ-1, value);
+			String cookieVal = sessionInfo.getSessionId()
+					+ SEPARATOR + sessionInfo.getVersion()
+					+ SEPARATOR + wMembers.toString();
+			
+			if(cookieVal.length() > 1024) {
+				out.write(handleError("Cookie size exceeded."));
+				return;
+			}
+			Cookie newCookie = new Cookie(COOKIE_NAME, cookieVal); 
+			response.addCookie(newCookie);
+			out.write(assign3HTML("(" + value.getCount() + ")" + " " + value.getMsg()));
+			return;
 		}
 		finally {
 			// Code to Clean up session that have timed out.
@@ -228,8 +169,9 @@ public class SSM extends HttpServlet {
 		}
 	}
 
-	private SessionInfo createNewSession(int value) {
-		return new SessionInfo(new Value(value));
+	private void choose(int w, Members members2) {
+		// TODO Auto-generated method stub
+
 	}
 
 	private String handleError(String str) {
