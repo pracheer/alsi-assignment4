@@ -16,12 +16,16 @@ public class Operation {
 	OpCode opCode;
 	int callId;
 	Message message;
+	boolean error;
+	String errorMsg;
+	
 	private static final String OP_SEP = "_";
 
 	public Operation(int callId, OpCode opCode, Message message) {
 		this.opCode = opCode;
 		this.callId = callId;
 		this.message = message;
+		this.error = false;
 	}
 	
 	public OpCode getOpCode() {
@@ -36,6 +40,12 @@ public class Operation {
 		return message;
 	}
 	
+	public boolean isError() {
+		return error;
+	}
+	public String getErrorMsg() {
+		return errorMsg;
+	}
 	/**
 	 * to unroll the operation from a string sent by request.
 	 * @param opString
