@@ -11,6 +11,7 @@ import java.util.Random;
 public class SsmUtil {
 
 	Member myInfo = new Member();
+	public static final int port = 1000;
 	Random randomGenerator = new Random();
 	int timeOut = 1000;	//ms
 	int gossipTimeGap = 1100; //ms
@@ -21,7 +22,7 @@ public class SsmUtil {
 	
 	SsmUtil(){
 		try {
-			myInfo.setSocket(java.net.InetAddress.getLocalHost().getAddress().toString(), 10000);
+			myInfo.setSocket(java.net.InetAddress.getLocalHost().getAddress().toString(), port);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
