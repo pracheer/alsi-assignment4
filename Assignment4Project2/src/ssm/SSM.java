@@ -2,6 +2,8 @@ package ssm;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,6 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 public class SSM extends HttpServlet {
 	private static final String SEPARATOR = "_";
 
+	private static final String LOCATION_SEPARATOR = ";";
+
 	private static final String COOKIE_NAME = "CS5300SESSION";
 
 	private static final long serialVersionUID = 1L;
@@ -29,6 +33,12 @@ public class SSM extends HttpServlet {
 	public static final String title = "Session Management";
 
 	HashMap<String, SessionInfo> sessionMap;
+
+	private SSMStub ssmStub;
+
+	private Members members;
+	
+	private InetAddress myIPAddress;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -40,14 +50,21 @@ public class SSM extends HttpServlet {
 	@Override
 	public void init() throws ServletException {
 		super.init();
+		
+		try {
+			myIPAddress = InetAddress.getLocalHost();
+			
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
 		sessionMap = new HashMap<String, SessionInfo>();
 		RPCServer rpcServer = new  RPCServer(sessionMap);
 		Thread server = new Thread(rpcServer);
 		server.start();
 		
-		RPCClient rpcClient = new RPCClient();
+		ssmStub = new SSMStub(members);
 		
-		Members members = new Members();
+		members = new Members();
 		GMClient gmClient = new GMClient(members);
 		Thread gmThread = new Thread(gmClient);
 		gmThread.start();
@@ -83,9 +100,26 @@ public class SSM extends HttpServlet {
 						
 						String sessionId = split[0];
 						int version = Integer.parseInt(split[1]);
-						String location = split[2];
-
-						if(sessionId != null ) {
+						String locationString = split[2];
+						String[] locations = locationString.split(LOCATION_SEPARATOR);
+						
+						// search in local database.
+						boolean found = false;
+						for (String location : locations) {
+							if(location.equals(myIPAddress.getHostAddress())) {
+								if(sessionId != null ) {
+									if(sessionMap.containsKey(sessionId)) {
+										sessionInfo = sessionMap.get(sessionId);
+										if(version == sessionInfo.getVersion()) {
+											found = true;
+										}
+									}
+								}
+							}
+						}
+						
+						if(!found && sessionId != null ) {
+							ssmStub.get(sessionId, version, locations);
 							if(sessionMap.containsKey(sessionId)) {
 								sessionInfo = sessionMap.get(sessionId);
 								if(version != sessionInfo.getVersion()) {
