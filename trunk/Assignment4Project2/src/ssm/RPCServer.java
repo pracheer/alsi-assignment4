@@ -19,13 +19,13 @@ public class RPCServer implements Runnable {
 
 	@Override
 	public void run() {
-		/*try {
+		try {
 			
 			rpcSocket = new DatagramSocket(SsmUtil.getInstance().getMySocketInfo().getPort());   //assumes one ip address of the machine
 			
 		} catch (SocketException e) {
 			e.printStackTrace();
-		}*/
+		}
 		if(buffer.equals(S))
 		{
 			byte[] buf;
