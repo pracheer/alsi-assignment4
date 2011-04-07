@@ -31,6 +31,11 @@ public class Operation {
 	public int getCallId() {
 		return callId;
 	}
+	
+	public Message getMessage() {
+		return message;
+	}
+	
 	/**
 	 * to unroll the operation from a string sent by request.
 	 * @param opString

@@ -8,7 +8,11 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
+
 import ssm.Operation.OpCode;
+import ssm.messages.Get;
+import ssm.messages.Message;
 
 public class RPCServer implements Runnable {
 
@@ -58,10 +62,25 @@ public class RPCServer implements Runnable {
 	private byte[] computeResponse(byte[] data, int length) {
 		Operation operation = Operation.fromString(new String(data));
 		if(operation.getOpCode() == OpCode.PING) {
+			// return the same thing again.
 			return operation.toString().getBytes();
 		}
 		if(operation.getOpCode() == OpCode.GET) {
-			
+			Message message = operation.getMessage();
+			if(message instanceof Get) {
+				Get getMsg = (Get)message;
+				if(sessionMap.containsKey(getMsg.getSessionId())) {
+					SessionInfo sessionInfo = sessionMap.get(getMsg.getSessionId());
+					synchronized (sessionInfo) {
+						if(sessionInfo.getVersion() == getMsg.getVersion()) {
+							
+						}
+						else {
+							
+						}
+					}
+				}
+			}
 		}
 		if(operation.getOpCode() == OpCode.PUT) {
 			
