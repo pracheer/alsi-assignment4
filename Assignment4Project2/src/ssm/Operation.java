@@ -1,5 +1,10 @@
 package ssm;
 
+import ssm.messages.Get;
+import ssm.messages.Message;
+import ssm.messages.Ping;
+import ssm.messages.Put;
+
 public class Operation {
 
 	enum OpCode {
@@ -10,11 +15,13 @@ public class Operation {
 	
 	OpCode opCode;
 	int callId;
-//	String 
+	Message message;
 	private static final String OP_SEP = "_";
 
-	public Operation(int callId, OpCode opCode) {
+	public Operation(int callId, OpCode opCode, Message message) {
 		this.opCode = opCode;
+		this.callId = callId;
+		this.message = message;
 	}
 	
 	public OpCode getOpCode() {
@@ -32,20 +39,24 @@ public class Operation {
 	public static Operation fromString(String opString) {
 		String[] strings = opString.split(OP_SEP);
 		int callId = Integer.parseInt(strings[0]);
+		String msgString = opString.substring((strings[0]+OP_SEP+strings[1]+OP_SEP).length());
 		if(strings[1].equalsIgnoreCase(OpCode.PING.toString())) {
-			return new Operation(callId, OpCode.PING);
+			Message message = new Ping(msgString);
+			return new Operation(callId, OpCode.PING, message);
 		}
 		else if (strings[1].equalsIgnoreCase(OpCode.GET.toString())) {
-			return new Operation(callId, OpCode.GET);
+			Message message = Get.fromString(msgString);
+			return new Operation(callId, OpCode.GET, message);
 		}
 		else if(strings[1].equalsIgnoreCase(OpCode.PUT.toString())) {
-			return new Operation(callId, OpCode.PUT);
+			Message message = Put.fromString(msgString);
+			return new Operation(callId, OpCode.PUT, message);
 		}
 		
 		return null;
 	}
 	
 	public String toString() {
-		return callId + OP_SEP + opCode;
+		return callId + OP_SEP + opCode + OP_SEP + message;
 	}
 }

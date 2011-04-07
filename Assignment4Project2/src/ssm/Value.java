@@ -1,5 +1,7 @@
 package ssm;
 
+import com.sun.org.apache.xml.internal.security.utils.SignatureElementProxy;
+
 /**
  * This class contains the value (count & message) associated with a given Session.
  * @author prac
@@ -7,9 +9,10 @@ package ssm;
  */
 public class Value {
 	
-	public static String DEFAULT_MSG = "Hello, User!";
 	private int count;
 	private String msg;
+	private static String SEPARATOR = ";";
+	public static String DEFAULT_MSG = "Hello, User!";
 	
 	public Value(int count) {
 		super();
@@ -34,5 +37,14 @@ public class Value {
 	}
 	public void setMsg(String msg) {
 		this.msg = msg;
+	}
+	
+	public String toString() {
+		return count + SEPARATOR + msg;
+	}
+	
+	public static Value fromString(String string) {
+		String[] strings = string.split(SEPARATOR);
+		return new Value(Integer.parseInt(strings[0]), strings[1]);
 	}
 }
