@@ -9,13 +9,21 @@ public class Operation {
 	}
 	
 	OpCode opCode;
-	
+	int callId;
+//	String 
 	private static final String OP_SEP = "_";
 
-	public Operation(OpCode opCode) {
+	public Operation(int callId, OpCode opCode) {
 		this.opCode = opCode;
 	}
 	
+	public OpCode getOpCode() {
+		return opCode;
+	}
+	
+	public int getCallId() {
+		return callId;
+	}
 	/**
 	 * to unroll the operation from a string sent by request.
 	 * @param opString
@@ -23,16 +31,21 @@ public class Operation {
 	 */
 	public static Operation fromString(String opString) {
 		String[] strings = opString.split(OP_SEP);
-		if(strings[0].equalsIgnoreCase(OpCode.PING.toString())) {
-			return new Operation(OpCode.PING);
+		int callId = Integer.parseInt(strings[0]);
+		if(strings[1].equalsIgnoreCase(OpCode.PING.toString())) {
+			return new Operation(callId, OpCode.PING);
 		}
-		else if (strings[0].equalsIgnoreCase(OpCode.GET.toString())) {
-			return new Operation(OpCode.GET);
+		else if (strings[1].equalsIgnoreCase(OpCode.GET.toString())) {
+			return new Operation(callId, OpCode.GET);
 		}
-		else if(strings[0].equalsIgnoreCase(OpCode.PUT.toString())) {
-			return new Operation(OpCode.PUT);
+		else if(strings[1].equalsIgnoreCase(OpCode.PUT.toString())) {
+			return new Operation(callId, OpCode.PUT);
 		}
 		
 		return null;
+	}
+	
+	public String toString() {
+		return callId + OP_SEP + opCode;
 	}
 }
