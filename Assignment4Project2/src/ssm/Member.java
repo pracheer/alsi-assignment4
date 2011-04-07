@@ -9,6 +9,12 @@ public class Member {
 	String ipAddress;
 	int port;
 	
+	public Member(String ipAddress, int port) {
+		super();
+		this.ipAddress = ipAddress;
+		this.port = port;
+	}
+
 	public String getIpAddress() {
 		return ipAddress;
 	}
@@ -17,11 +23,6 @@ public class Member {
 		return port;
 	}
 
-	public void setSocket(String ip, int inPort) {
-		ipAddress = ip;
-		port = inPort;	
-	}
-	
 	public boolean isEqualTo(Member m)
 	{
 		return (m.getIpAddress().equals(ipAddress) &&

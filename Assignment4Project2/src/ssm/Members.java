@@ -1,32 +1,35 @@
 package ssm;
 
 import java.util.ArrayList;
+import java.util.Vector;
 
 public class Members {
 	
-	ArrayList<Member> groupMembers;
+	Vector<Member> members;
 	
+	private static final String LOCATION_SEPARATOR = ";";
+
 	public Members() {
-		groupMembers = new ArrayList<Member>();
+		members = new Vector<Member>();
 	}
 	
-	public ArrayList<Member> getGroupMembers() {
+	public Vector<Member> getMembers() {
 		//Send data to the server
-		return groupMembers;
+		return members;
 	}
 	
 	synchronized void changeMemberList(Member m, boolean addMember)
 	{
 		int  myPos = 0;
-		for (Member member : groupMembers) {
+		for (Member member : members) {
 			if(member.isEqualTo(m))
 				break;
 			myPos++;
 		}
-		if(addMember && myPos == groupMembers.size())
-			groupMembers.add(m);
-		if(!addMember && myPos < groupMembers.size())
-			groupMembers.remove(myPos);
+		if(addMember && myPos == members.size())
+			members.add(m);
+		if(!addMember && myPos < members.size())
+			members.remove(myPos);
 		//Send data to the server 
 	}
 	
@@ -38,6 +41,26 @@ public class Members {
 	public void removeMember(Member m)
 	{
 		changeMemberList(m, false);
+	}
+	
+	public static Members fromString(String locationString) {
+		Members members = new Members();
+		String[] strings = locationString.split(LOCATION_SEPARATOR);
+		for(int l = 0; l < strings.length; l=l+2) {
+			String ipAddress = strings[l];
+			int port = Integer.parseInt(strings[l+1]);
+			Member member = new Member(ipAddress, port);
+			members.addNewMember(member);
+		}
+		return members;
+	}
+	
+	public boolean search(Member mem) {
+		for (Member member : members) {
+			if(member.isEqualTo(mem))
+				return true;
+		}
+		return false;
 	}
 }
 
