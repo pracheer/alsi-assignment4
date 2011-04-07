@@ -42,8 +42,8 @@ public class RPCServer implements Runnable {
 				rpcSocket.receive(recvPkt);
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
-
 				// here inBuf contains the callID and operationCode
+				
 				byte[] outBuf = computeResponse(recvPkt.getData(), recvPkt.getLength());
 				// here outBuf should contain the callID
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length,
@@ -56,9 +56,8 @@ public class RPCServer implements Runnable {
 
 	}
 
-	private Operation computeResponseOperation(byte[] data, int length) {
+	private Operation computeResponseOperation(Operation operation) {
 
-		Operation operation = Operation.fromString(new String(data));
 		Message message = operation.getMessage();
 
 		if(operation.getOpCode() == OpCode.PING) {
@@ -107,8 +106,9 @@ public class RPCServer implements Runnable {
 
 	}
 	private byte[] computeResponse(byte[] data, int length) {
-		Operation operation = computeResponseOperation(data, length);
-		return operation.toString().getBytes();
+		Operation operation = Operation.fromString(new String(data));
+		Operation operationOut = computeResponseOperation(operation);
+		return operationOut.toString().getBytes();
 	}
 
 }
