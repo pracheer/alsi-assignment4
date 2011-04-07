@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class SsmUtil {
 
-	Member myInfo = new Member();
+	Member myInfo;
 	public static final int port = 1000;
 	Random randomGenerator = new Random();
 	int timeOut = 1000;	//ms
@@ -22,7 +22,7 @@ public class SsmUtil {
 	
 	SsmUtil(){
 		try {
-			myInfo.setSocket(java.net.InetAddress.getLocalHost().getAddress().toString(), port);
+			myInfo = new Member(java.net.InetAddress.getLocalHost().getAddress().toString(), port);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}

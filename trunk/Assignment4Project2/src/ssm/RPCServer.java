@@ -5,15 +5,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
-
 import ssm.Operation.OpCode;
-import ssm.messages.Get;
 import ssm.messages.Message;
-import ssm.messages.Put;
+import ssm.messages.GeneralMsg;
 
 public class RPCServer implements Runnable {
 
@@ -21,18 +17,25 @@ public class RPCServer implements Runnable {
 	byte[] buffer;
 	private HashMap<String, SessionInfo> sessionMap;
 	public static String INVALID_VERSION = "Invalid Version found";
+	private int port;
 
 	public RPCServer(HashMap<String, SessionInfo> sessionMap) {
 		this.sessionMap = sessionMap;
+		try {
+			rpcSocket = new DatagramSocket();
+			port = rpcSocket.getPort();
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
 	}
 
+	public int getPort() {
+		return port;
+	}
+	
 	@Override
 	public void run() {
 		try {
-
-			rpcSocket = new DatagramSocket();
-			int port = rpcSocket.getPort();
-
 			while(true) {
 				byte[] inBuf = new byte[1000];
 				DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
@@ -46,15 +49,7 @@ public class RPCServer implements Runnable {
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length,
 						returnAddr, returnPort);
 				rpcSocket.send(sendPkt);
-
-				//				                        					byte[] buf;
-				//					Member m = getMemberFromBuffer(buffer);
-				//					DatagramPacket packet = new DatagramPacket(buf, buf.length, 
-				//							InetAddress.getByName(m.getIpAddress()), m.getPort());
 			}
-
-		} catch (SocketException e) {
-			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -72,18 +67,20 @@ public class RPCServer implements Runnable {
 		}
 
 		if(operation.getOpCode() == OpCode.GET) {
-			if(message instanceof Get) {
-				Get getMsg = (Get)message;
+			if(message instanceof GeneralMsg) {
+				GeneralMsg getMsg = (GeneralMsg)message;
 				if(sessionMap.containsKey(getMsg.getSessionId())) {
 					SessionInfo sessionInfo = sessionMap.get(getMsg.getSessionId());
 					synchronized (sessionInfo) {
 						if(sessionInfo.getVersion() == getMsg.getVersion()) {
 							Value value = sessionInfo.getValue();
-							
-							return value.toString().getBytes();
+							getMsg.setValue(value);
+							operation.setMessage(getMsg);
+							return operation;
 						}
 						else {
-							return INVALID_VERSION.getBytes();
+							operation.setErrorMsg(INVALID_VERSION);
+							return operation;
 						}
 					}
 				}
@@ -91,8 +88,8 @@ public class RPCServer implements Runnable {
 		}
 
 		if(operation.getOpCode() == OpCode.PUT) {
-			if(message instanceof Put) {
-				Put putMsg = (Put)message;
+			if(message instanceof GeneralMsg) {
+				GeneralMsg putMsg = (GeneralMsg)message;
 				SessionInfo newSessionInfo = new SessionInfo(putMsg.getValue(), putMsg.getVersion());
 				if(sessionMap.containsKey(putMsg.getSessionId())) {
 					SessionInfo sessionInfo = sessionMap.get(putMsg.getSessionId());
@@ -103,12 +100,11 @@ public class RPCServer implements Runnable {
 				else {
 					sessionMap.put(putMsg.getSessionId(), newSessionInfo);
 				}
-				
-				
+				putMsg.removeValue();
 			}
 		}
 		return null;
-	
+
 	}
 	private byte[] computeResponse(byte[] data, int length) {
 		Operation operation = computeResponseOperation(data, length);

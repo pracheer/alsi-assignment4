@@ -1,9 +1,8 @@
 package ssm;
 
-import ssm.messages.Get;
+import ssm.messages.GeneralMsg;
 import ssm.messages.Message;
 import ssm.messages.Ping;
-import ssm.messages.Put;
 
 public class Operation {
 
@@ -40,12 +39,21 @@ public class Operation {
 		return message;
 	}
 	
+	public void setMessage(Message message) {
+		this.message = message;
+	}
+	
 	public boolean isError() {
 		return error;
 	}
 	public String getErrorMsg() {
 		return errorMsg;
 	}
+	public void setErrorMsg(String errorMsg) {
+		this.error = true;
+		this.errorMsg = errorMsg;
+	}
+	
 	/**
 	 * to unroll the operation from a string sent by request.
 	 * @param opString
@@ -60,11 +68,11 @@ public class Operation {
 			return new Operation(callId, OpCode.PING, message);
 		}
 		else if (strings[1].equalsIgnoreCase(OpCode.GET.toString())) {
-			Message message = Get.fromString(msgString);
+			Message message = GeneralMsg.fromString(msgString);
 			return new Operation(callId, OpCode.GET, message);
 		}
 		else if(strings[1].equalsIgnoreCase(OpCode.PUT.toString())) {
-			Message message = Put.fromString(msgString);
+			Message message = GeneralMsg.fromString(msgString);
 			return new Operation(callId, OpCode.PUT, message);
 		}
 		

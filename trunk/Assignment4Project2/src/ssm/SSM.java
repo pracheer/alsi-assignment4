@@ -24,8 +24,6 @@ import javax.servlet.http.HttpServletResponse;
 public class SSM extends HttpServlet {
 	private static final String SEPARATOR = "_";
 
-	private static final String LOCATION_SEPARATOR = ";";
-
 	private static final String COOKIE_NAME = "CS5300SESSION";
 
 	private static final long serialVersionUID = 1L;
@@ -39,6 +37,8 @@ public class SSM extends HttpServlet {
 	private Members members;
 	
 	private InetAddress myIPAddress;
+
+	private Member me;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -59,6 +59,8 @@ public class SSM extends HttpServlet {
 		}
 		sessionMap = new HashMap<String, SessionInfo>();
 		RPCServer rpcServer = new  RPCServer(sessionMap);
+		me = new Member(myIPAddress.toString(), rpcServer.getPort());
+		
 		Thread server = new Thread(rpcServer);
 		server.start();
 		
@@ -101,22 +103,61 @@ public class SSM extends HttpServlet {
 						String sessionId = split[0];
 						int version = Integer.parseInt(split[1]);
 						String locationString = split[2];
-						String[] locations = locationString.split(LOCATION_SEPARATOR);
 						
+						// consists of ipaddress and port pair.
+						Members locationMembers = Members.fromString(locationString);
+						
+						boolean found = locationMembers.search(me);
 						// search in local database.
-						boolean found = false;
-						for (String location : locations) {
-							if(location.equals(myIPAddress.getHostAddress())) {
-								if(sessionId != null ) {
-									if(sessionMap.containsKey(sessionId)) {
-										sessionInfo = sessionMap.get(sessionId);
-										if(version == sessionInfo.getVersion()) {
-											found = true;
+						if(found) {
+							if(sessionMap.containsKey(sessionId)) {
+								sessionInfo = sessionMap.get(sessionId);
+								if(version != sessionInfo.getVersion()) {
+									out.write(handleError("Invalid Version Number"));
+									return;
+								}
+								else if (System.currentTimeMillis() > sessionInfo.getTimestamp()) {
+									count = 1;
+									sessionInfo = createNewSession(count);
+								} 
+								else {
+									synchronized(sessionInfo) {
+										// synchronization on the session object.
+										if(request.getParameter("logout")!=null) {
+											sessionMap.remove(sessionInfo.getSessionId());
+											out.write(createHTML("Bye!"));
+											return;
 										}
+										Value value = sessionInfo.getValue();
+										if(request.getParameter("replace")!=null) {
+											String message = request.getParameter("message");
+											value.setMsg(message);
+										}
+										count = value.getCount();
+										count++;
+										value.setCount(count);
+										sessionInfo.setValue(value);
+
+										String cookieVal = sessionInfo.getSessionId()+SEPARATOR+sessionInfo.getVersion()+SEPARATOR+sessionInfo.getLocation();
+										if(cookieVal.length() > 1024) {
+											out.write(handleError("Cookie size exceeded."));
+											return;
+										}
+										Cookie newCookie = new Cookie(COOKIE_NAME, cookieVal); 
+										response.addCookie(newCookie);
+										out.write(assign3HTML("(" + value.getCount() + ")" + " " + value.getMsg()));
+										sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
+										// TODO write to W - 1 servers.
+										return;
 									}
 								}
 							}
+							else {
+								count = 1;
+								sessionInfo = createNewSession(count);
+							}
 						}
+						
 						
 						if(!found && sessionId != null ) {
 							ssmStub.get(sessionId, version, locations);

@@ -10,6 +10,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Vector;
 
 /**
  * Group Membership Client.
@@ -39,7 +40,7 @@ public class GMClient implements Runnable {
 		}
 		Member myInfo = SsmUtil.getInstance().getMySocketInfo();
 		int  myPos = 0;
-		ArrayList<Member> groupMembers = members.getGroupMembers();
+		Vector<Member> groupMembers = members.getMembers();
 		for (Member member : groupMembers) {
 			if(member.isEqualTo(myInfo))
 				break;
