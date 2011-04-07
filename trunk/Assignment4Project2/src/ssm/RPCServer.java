@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.HashMap;
 
-import ssm.Operation.OpCode;
 import ssm.messages.Message;
 import ssm.messages.GeneralMsg;
 
@@ -44,7 +43,7 @@ public class RPCServer implements Runnable {
 				int returnPort = recvPkt.getPort();
 				// here inBuf contains the callID and operationCode
 
-				byte[] outBuf = computeResponse(recvPkt.getData(), recvPkt.getLength());
+				byte[] outBuf = computeResponse(recvPkt.getData());
 				// here outBuf should contain the callID
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length,
 						returnAddr, returnPort);
@@ -64,7 +63,7 @@ public class RPCServer implements Runnable {
 		case PING:
 			// return the same thing again.
 			return operation;
-			
+
 		case GET:
 
 			if(message instanceof GeneralMsg) {
@@ -73,11 +72,14 @@ public class RPCServer implements Runnable {
 					SessionInfo sessionInfo = sessionMap.get(getMsg.getSessionId());
 					synchronized (sessionInfo) {
 						if(sessionInfo.getVersion() == getMsg.getVersion()) {
-							
+
 							// Timeout
-							if(sessionInfo.getTimestamp() < System.currentTimeMillis())
-								return null;
-								
+							if(sessionInfo.getTimestamp() < System.currentTimeMillis()) {
+								operation.setErrorMsg("Data is quite old. So, \"TIMED OUT\"");
+								sessionMap.remove(getMsg.getSessionId());
+								return operation;
+							}
+
 							Value value = sessionInfo.getValue();
 							getMsg.setValue(value);
 							operation.setMessage(getMsg);
@@ -88,6 +90,10 @@ public class RPCServer implements Runnable {
 							return operation;
 						}
 					}
+				}
+				else {
+					operation.setErrorMsg("Session not found");
+					return operation;
 				}
 			}
 			break;
@@ -106,6 +112,8 @@ public class RPCServer implements Runnable {
 					sessionMap.put(putMsg.getSessionId(), newSessionInfo);
 				}
 				putMsg.removeValue();
+				operation.setMessage(putMsg);
+				return operation;
 			}
 			break;
 
@@ -118,6 +126,10 @@ public class RPCServer implements Runnable {
 						sessionMap.remove(putMsg.getSessionId());
 					}
 				}
+				else {
+					operation.setErrorMsg("Session not found");
+					return operation;
+				}
 			}
 			break;
 		}
@@ -125,7 +137,7 @@ public class RPCServer implements Runnable {
 		return null;
 
 	}
-	private byte[] computeResponse(byte[] data, int length) {
+	private byte[] computeResponse(byte[] data) {
 		Operation operation = Operation.fromString(new String(data));
 		Operation operationOut = computeResponseOperation(operation);
 		return operationOut.toString().getBytes();
