@@ -32,7 +32,7 @@ public class RPCServer implements Runnable {
 	public int getPort() {
 		return port;
 	}
-	
+
 	@Override
 	public void run() {
 		try {
@@ -43,7 +43,7 @@ public class RPCServer implements Runnable {
 				InetAddress returnAddr = recvPkt.getAddress();
 				int returnPort = recvPkt.getPort();
 				// here inBuf contains the callID and operationCode
-				
+
 				byte[] outBuf = computeResponse(recvPkt.getData(), recvPkt.getLength());
 				// here outBuf should contain the callID
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length,
@@ -60,18 +60,24 @@ public class RPCServer implements Runnable {
 
 		Message message = operation.getMessage();
 
-		if(operation.getOpCode() == OpCode.PING) {
+		switch(operation.getOpCode()) {
+		case PING:
 			// return the same thing again.
 			return operation;
-		}
+			
+		case GET:
 
-		if(operation.getOpCode() == OpCode.GET) {
 			if(message instanceof GeneralMsg) {
 				GeneralMsg getMsg = (GeneralMsg)message;
 				if(sessionMap.containsKey(getMsg.getSessionId())) {
 					SessionInfo sessionInfo = sessionMap.get(getMsg.getSessionId());
 					synchronized (sessionInfo) {
 						if(sessionInfo.getVersion() == getMsg.getVersion()) {
+							
+							// Timeout
+							if(sessionInfo.getTimestamp() < System.currentTimeMillis())
+								return null;
+								
 							Value value = sessionInfo.getValue();
 							getMsg.setValue(value);
 							operation.setMessage(getMsg);
@@ -84,12 +90,12 @@ public class RPCServer implements Runnable {
 					}
 				}
 			}
-		}
+			break;
 
-		if(operation.getOpCode() == OpCode.PUT) {
+		case PUT:
 			if(message instanceof GeneralMsg) {
 				GeneralMsg putMsg = (GeneralMsg)message;
-				SessionInfo newSessionInfo = new SessionInfo(putMsg.getValue(), putMsg.getVersion());
+				SessionInfo newSessionInfo = SessionInfo.create(putMsg.getValue(), putMsg.getVersion());
 				if(sessionMap.containsKey(putMsg.getSessionId())) {
 					SessionInfo sessionInfo = sessionMap.get(putMsg.getSessionId());
 					synchronized(sessionInfo) {
@@ -101,7 +107,21 @@ public class RPCServer implements Runnable {
 				}
 				putMsg.removeValue();
 			}
+			break;
+
+		case REMOVE:
+			if(message instanceof GeneralMsg) {
+				GeneralMsg putMsg = (GeneralMsg)message;
+				if(sessionMap.containsKey(putMsg.getSessionId())) {
+					SessionInfo sessionInfo = sessionMap.get(putMsg.getSessionId());
+					synchronized(sessionInfo) {
+						sessionMap.remove(putMsg.getSessionId());
+					}
+				}
+			}
+			break;
 		}
+
 		return null;
 
 	}

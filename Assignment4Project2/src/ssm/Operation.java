@@ -9,7 +9,8 @@ public class Operation {
 	enum OpCode {
 		PING,
 		GET,
-		PUT
+		PUT, 
+		REMOVE
 	}
 	
 	OpCode opCode;

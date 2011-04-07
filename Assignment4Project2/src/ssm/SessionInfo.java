@@ -12,12 +12,10 @@ import java.net.UnknownHostException;
 
 public class SessionInfo {
 	
-	private static final String LOCALHOST = "127.0.0.1";
 	private String sessionId;
 	private int version;
 	private long timestamp;
 	private Value value;
-	private String location;
 	
 	public static final long SESSION_VALIDITY = 60*1000; // 1 minute
 
@@ -31,29 +29,36 @@ public class SessionInfo {
 		timestamp = System.currentTimeMillis() + SESSION_VALIDITY; 
 	}
 	
-	public SessionInfo(Value value) {
-		super();
-		construct(value);
-	}
-
-	private void construct(Value value) {
+	public static SessionInfo create(Value value) {
 		try {
-		InetAddress addr = InetAddress.getLocalHost();
-		this.sessionId = addr.getHostAddress() + System.nanoTime();
-		this.version = 1;
-		timestamp = System.currentTimeMillis() + SESSION_VALIDITY; 
-		this.value = value;
-		this.location = LOCALHOST;
+			InetAddress addr = InetAddress.getLocalHost();
+			String sessionId = addr.getHostAddress() + System.nanoTime();
+			int version = 1;
+			return new SessionInfo(sessionId, version, value);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 	
-	public SessionInfo(Value value, int version) {
-		construct(value);
+	public static SessionInfo create(Value value, int version) {
+		try {
+			InetAddress addr = InetAddress.getLocalHost();
+			String sessionId = addr.getHostAddress() + System.nanoTime();
+			return new SessionInfo(sessionId, version, value);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public SessionInfo(String sessionId, int version, Value value) {
+		this.sessionId = sessionId;
 		this.version = version;
+		this.value = value;
+		timestamp = System.currentTimeMillis() + SESSION_VALIDITY; 
 	}
-	
+
 	public String getSessionId() {
 		return sessionId;
 	}
@@ -69,9 +74,4 @@ public class SessionInfo {
 	public Value getValue() {
 		return value;
 	}
-
-	public String getLocation() {
-		return location;
-	}
-
 }

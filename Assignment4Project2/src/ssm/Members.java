@@ -1,6 +1,5 @@
 package ssm;
 
-import java.util.ArrayList;
 import java.util.Vector;
 
 public class Members {
@@ -18,7 +17,7 @@ public class Members {
 		return members;
 	}
 	
-	synchronized void changeMemberList(Member m, boolean addMember)
+	synchronized void changeList(Member m, boolean addMember)
 	{
 		int  myPos = 0;
 		for (Member member : members) {
@@ -33,14 +32,14 @@ public class Members {
 		//Send data to the server 
 	}
 	
-	public void addNewMember(Member m)
+	public void add(Member m)
 	{
-		changeMemberList(m, true);
+		changeList(m, true);
 	}
 	
-	public void removeMember(Member m)
+	public void remove(Member m)
 	{
-		changeMemberList(m, false);
+		changeList(m, false);
 	}
 	
 	public static Members fromString(String locationString) {
@@ -50,9 +49,20 @@ public class Members {
 			String ipAddress = strings[l];
 			int port = Integer.parseInt(strings[l+1]);
 			Member member = new Member(ipAddress, port);
-			members.addNewMember(member);
+			members.add(member);
 		}
 		return members;
+	}
+	
+	public String toString() {
+		StringBuffer buffer = new StringBuffer();
+		for (int m = 0; m < size(); m++) {
+			Member member = members.get(m);
+			buffer.append(member.getIpAddress() + LOCATION_SEPARATOR + member.getPort());
+			if(m < (size()-1))
+				buffer.append(LOCATION_SEPARATOR);
+		}
+		return buffer.toString();
 	}
 	
 	public boolean search(Member mem) {
@@ -61,6 +71,14 @@ public class Members {
 				return true;
 		}
 		return false;
+	}
+	
+	public int size() {
+		return members.size();
+	}
+	
+	public Member get(int i) {
+		return members.get(i);
 	}
 }
 
