@@ -7,9 +7,11 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -21,9 +23,11 @@ import java.util.Vector;
 public class GMClient implements Runnable {
 
 	private Members members;
+	private Member me;
 
-	public GMClient(Members members) {
+	public GMClient(Members members, Member me) {
 		this.members = members;
+		this.me = me;
 	}
 
 	/* (non-Javadoc)
@@ -31,59 +35,58 @@ public class GMClient implements Runnable {
 	 */
 	@Override
 	public void run() {
-		
-		DatagramSocket rpcSocket = null;
+
 		try {
+			Random randomGenerator = new Random();
+			DatagramSocket rpcSocket = null;
 			rpcSocket = new DatagramSocket();
+
+			// keep track if dbmembers have been modified.
+			boolean modified = false;
+			// getmembers for simpleDB.
+			Members dbMembers = new Members();
+			boolean found = dbMembers.search(me);
+			int rand = randomGenerator.nextInt(dbMembers.size());
+
+			boolean timeout = false;
+			byte[] buf = new byte[256];
+			Member testMember = dbMembers.get(rand);
+			InetSocketAddress socketAddress = new InetSocketAddress(testMember.getIpAddress(), testMember.getPort());
+			DatagramPacket packet = new DatagramPacket(buf, buf.length, socketAddress);
+			try {
+				
+			rpcSocket.send(packet);
+			
+			rpcSocket.setSoTimeout(Constants.TIMEOUT);
+			
+			DatagramPacket recvPkt = new DatagramPacket(buf, buf.length);
+			rpcSocket.receive(recvPkt);
+			
+			timeout = false;
+			
+			} catch(SocketTimeoutException e) {
+				timeout = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			if(!found) {
+				dbMembers.add(me);
+				modified = true;
+			}
+			if(timeout) {
+				dbMembers.remove(testMember);
+				modified = true;
+			}
+			
+			if(modified) {
+				// update dbMembers to simpleDB
+			}
+
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		Member myInfo = SSMUtil.getInstance().getMySocketInfo();
-		int  myPos = 0;
-		Vector<Member> groupMembers = members.getMembers();
-		for (Member member : groupMembers) {
-			if(member.isEqualTo(myInfo))
-				break;
-			myPos++;
-		}
-		int size = groupMembers.size();
-		if(myPos == groupMembers.size())
-		{
-			groupMembers.add(myInfo);
-			members.add(myInfo);
-			size++;
-		}
-		int rand;
-		do{
-			rand = SSMUtil.getInstance().getRandomNumberInRange(0, size);
-		}while(rand != myPos);
-		
-		byte[] buf = new byte[256];
-		InetAddress address = null;
-		try {
-			address = InetAddress.getByName(groupMembers.get(rand).getIpAddress());
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
-		
-		DatagramPacket packet = new DatagramPacket(buf, buf.length, 
-		                                           address, groupMembers.get(rand).getPort());
-		try {
-			rpcSocket.send(packet);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		SSMUtil.getInstance().setWaitingMember(groupMembers.get(rand));
-		try {
-			Thread.sleep(SSMUtil.getInstance().getTimeOut());
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		if(SSMUtil.getInstance().getWaitingMember()!=null)
-		{
-			members.remove(groupMembers.get(rand));
-			SSMUtil.getInstance().cleanWaitingMember();
-		}
+
 	}
 
 }
