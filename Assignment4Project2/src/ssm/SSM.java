@@ -2,8 +2,6 @@ package ssm;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -36,8 +34,6 @@ public class SSM extends HttpServlet {
 
 	private Members members;
 
-	private String myIPAddress;
-
 	private Member me;
 
 	/**
@@ -51,20 +47,14 @@ public class SSM extends HttpServlet {
 	public void init() throws ServletException {
 		super.init();
 
-		try {
-			myIPAddress = new String(InetAddress.getLocalHost().getAddress());
-
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
 		sessionMap = new HashMap<String, SessionInfo>();
 		BrickServer rpcServer = new  BrickServer(sessionMap);
-		me = new Member(rpcServer.getSocket());
+		me = new Member(rpcServer.getIP(), rpcServer.getPort());
 
 		Thread server = new Thread(rpcServer);
 		server.start();
 
-		ssmStub = new SSMStub(members);
+		ssmStub = new SSMStub();
 
 		members = new Members();
 		GMClient gmClient = new GMClient(members, me);
@@ -132,10 +122,13 @@ public class SSM extends HttpServlet {
 				}
 			}
 
-			sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
+			SessionInfo oldSession = sessionMap.get(sessionInfo.getSessionId());
+			synchronized (oldSession) {
+				sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
+			}
 
 			Value value = sessionInfo.getValue();
-			
+
 			// write to W members.
 			Members wMembers = ssmStub.put(sessionInfo.getSessionId(), sessionInfo.getVersion(), members, 
 					Constants.W-1, Constants.WQ-1, value);
@@ -166,7 +159,12 @@ public class SSM extends HttpServlet {
 			}
 
 			for (String key : removeList) {
-				sessionMap.remove(key);
+				SessionInfo sessionInfo = sessionMap.get(key);
+				if(sessionInfo != null) {
+					synchronized(sessionInfo) {
+						sessionMap.remove(key);
+					}
+				}
 			}
 		}
 	}

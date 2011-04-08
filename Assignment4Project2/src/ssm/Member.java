@@ -1,7 +1,5 @@
 package ssm;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 
 /**
  * @author prac, @bby
@@ -9,38 +7,27 @@ import java.net.SocketAddress;
  */
 
 public class Member {
-private InetSocketAddress socket;
 
-//	String hostName;
-//	int port;
-	
-	
-//	public Member(String hostName, int port) {
-//		super();
-//		this.hostName = hostName;
-//		this.port = port;
-//	}
+	private String ip;
+	private int port;
 
-	public Member(InetSocketAddress socket) {
-		this.socket = socket;
+	public Member(String hostName, int port) {
+		super();
+		this.ip = hostName;
+		this.port = port;
 	}
 
-//	public String gethostName() {
-//		return hostName;
-//	}
-//	
-//	public int getPort() {
-//		return port;
-//	}
+	public String getIp() {
+		return ip;
+	}
+
+	public int getPort() {
+		return port;
+	}
 
 	public boolean isEqualTo(Member m)
 	{
-		return m.getSocket().equals(socket);
-//		return (m.gethostName().equals(hostName) &&
-//		(m.getPort()==port));
-	}
-	
-	public InetSocketAddress getSocket() {
-		return socket;
+		return (m.getIp().equals(ip) &&
+				(m.getPort()==port));
 	}
 }

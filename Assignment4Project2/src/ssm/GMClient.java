@@ -7,12 +7,13 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Random;
-import java.util.Vector;
+
+import ssm.Operation.OpCode;
+import ssm.messages.Ping;
 
 /**
  * Group Membership Client.
@@ -24,10 +25,12 @@ public class GMClient implements Runnable {
 
 	private Members members;
 	private Member me;
+	private Random randomGenerator;
 
 	public GMClient(Members members, Member me) {
 		this.members = members;
 		this.me = me;
+		randomGenerator = new Random();
 	}
 
 	/* (non-Javadoc)
@@ -38,6 +41,7 @@ public class GMClient implements Runnable {
 
 		try {
 			while (true) {
+				int callId = randomGenerator.nextInt();
 				Random randomGenerator = new Random();
 				DatagramSocket rpcSocket = null;
 				rpcSocket = new DatagramSocket();
@@ -50,9 +54,11 @@ public class GMClient implements Runnable {
 				if(dbMembers.size()!=0) {
 					found = dbMembers.search(me);
 					int rand = randomGenerator.nextInt(dbMembers.size());
-					byte[] buf = new byte[256];
 					Member testMember = dbMembers.get(rand);
-					DatagramPacket packet = new DatagramPacket(buf, buf.length, testMember.getSocket());
+					InetAddress address = InetAddress.getByName(testMember.getIp());
+					Operation operation = new Operation(callId, OpCode.PING, new Ping());
+					byte[] buf = operation.toString().getBytes();
+					DatagramPacket packet = new DatagramPacket(buf, Constants.DATAGRAM_SIZE, address, testMember.getPort());
 					try {
 
 						rpcSocket.send(packet);
@@ -72,12 +78,14 @@ public class GMClient implements Runnable {
 					
 					if (timeout) {
 						dbMembers.remove(testMember);
-						instance.removeMember(testMember.getSocket());
+						instance.removeMember(testMember.getIp(), testMember.getPort());
 					}
+					
+					members.updateList(dbMembers);
 				}
 				
 				if (!found) {
-					instance.addMember(me.getSocket());
+					instance.addMember(me.getIp(), me.getPort());
 				}
 				
 				int sleepTime = Constants.roundTime/2 + randomGenerator.nextInt(Constants.roundTime);
@@ -89,6 +97,8 @@ public class GMClient implements Runnable {
 			}
 
 		} catch (SocketException e) {
+			e.printStackTrace();
+		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
 
