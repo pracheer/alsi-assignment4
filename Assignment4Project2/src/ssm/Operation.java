@@ -77,7 +77,9 @@ public class Operation {
 		boolean error = Boolean.parseBoolean(strings[2]);
 		String errorMsg = strings[3];
 		
-		String msgString = opString.substring((strings[0]+OP_SEP+strings[1]+OP_SEP+strings[2]+OP_SEP+strings[3]+OP_SEP).length());
+		// The remaining string indicates the Message.
+		int msgIndex = (strings[0]+OP_SEP+strings[1]+OP_SEP+strings[2]+OP_SEP+strings[3]+OP_SEP).length();
+		String msgString = opString.substring(msgIndex);
 		
 		if(opCodeStr.equalsIgnoreCase(OpCode.PING.toString())) {
 			Message message = new Ping(msgString);

@@ -58,7 +58,7 @@ public class SSM extends HttpServlet {
 			e.printStackTrace();
 		}
 		sessionMap = new HashMap<String, SessionInfo>();
-		RPCServer rpcServer = new  RPCServer(sessionMap);
+		BrickServer rpcServer = new  BrickServer(sessionMap);
 		me = new Member(myIPAddress.toString(), rpcServer.getPort());
 
 		Thread server = new Thread(rpcServer);
@@ -67,7 +67,7 @@ public class SSM extends HttpServlet {
 		ssmStub = new SSMStub(members);
 
 		members = new Members();
-		GMClient gmClient = new GMClient(members);
+		GMClient gmClient = new GMClient(members, me);
 		Thread gmThread = new Thread(gmClient);
 		gmThread.start();
 	}

@@ -68,9 +68,9 @@ public class SSMStub {
 				} catch(IOException ioe) {
 					ioe.printStackTrace();
 				}
-			} while( !replied || operationIn.getCallId() != callId);
+			} while( !replied || operationIn.getCallId() != callId || operation.isError());
 
-			if(operationIn!=null && operationIn.getCallId() == callId) {
+			if(operationIn!=null && operationIn.getCallId() == callId && !operation.isError()) {
 				GeneralMsg msg = (GeneralMsg)operation.getMessage();
 				return msg.getValue();
 			}
@@ -121,7 +121,7 @@ public class SSMStub {
 				} catch(IOException ioe) {
 					ioe.printStackTrace();
 				}
-			} while( !replied || operationIn.getCallId() != callId);
+			} while( !replied || operationIn.getCallId() != callId || operation.isError());
 
 		} catch (SocketException e) {
 			e.printStackTrace();
@@ -183,7 +183,7 @@ public class SSMStub {
 					rpcSocket.receive(recvPkt);
 					operationIn = Operation.fromString(new String(recvPkt.getData()));
 					
-					if(operationIn.getCallId() == callId) {
+					if(!operation.isError() && operationIn.getCallId() == callId) {
 						Member member = new Member(recvPkt.getAddress().toString(), recvPkt.getPort());
 						replied.add(member);
 					}

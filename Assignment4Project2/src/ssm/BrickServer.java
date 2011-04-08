@@ -10,7 +10,7 @@ import java.util.HashMap;
 import ssm.messages.Message;
 import ssm.messages.GeneralMsg;
 
-public class RPCServer implements Runnable {
+public class BrickServer implements Runnable {
 
 	DatagramSocket rpcSocket;
 	byte[] buffer;
@@ -18,7 +18,7 @@ public class RPCServer implements Runnable {
 	public static String INVALID_VERSION = "Invalid Version found";
 	private int port;
 
-	public RPCServer(HashMap<String, SessionInfo> sessionMap) {
+	public BrickServer(HashMap<String, SessionInfo> sessionMap) {
 		this.sessionMap = sessionMap;
 		try {
 			rpcSocket = new DatagramSocket();
