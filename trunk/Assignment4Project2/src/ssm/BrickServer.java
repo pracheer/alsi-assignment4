@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 
 import ssm.messages.Message;
@@ -18,7 +19,8 @@ public class BrickServer implements Runnable {
 	byte[] buffer;
 	private HashMap<String, SessionInfo> sessionMap;
 	public static String INVALID_VERSION = "Invalid Version found";
-	private InetSocketAddress socket;
+	private int port;
+	private String ip;
 
 	public BrickServer(HashMap<String, SessionInfo> sessionMap) {
 		this.sessionMap = sessionMap;
@@ -26,22 +28,30 @@ public class BrickServer implements Runnable {
 			rpcSocket = new DatagramSocket();
 			SocketAddress tmpSocket = rpcSocket.getLocalSocketAddress();
 			if(tmpSocket instanceof InetSocketAddress) {
-				socket = (InetSocketAddress)tmpSocket;
+				InetSocketAddress socket = (InetSocketAddress)tmpSocket;
+				port  = socket.getPort();
+				ip = InetAddress.getLocalHost().getHostAddress();
 			}
 		} catch (SocketException e) {
+			e.printStackTrace();
+		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public InetSocketAddress getSocket() {
-		return socket;
+	public int getPort() {
+		return port;
 	}
-
+	
+	public String getIP() {
+		return ip;
+	}
+	
 	@Override
 	public void run() {
 		try {
 			while(true) {
-				byte[] inBuf = new byte[1000];
+				byte[] inBuf = new byte[Constants.DATAGRAM_SIZE];
 				DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
 				rpcSocket.receive(recvPkt);
 				InetAddress returnAddr = recvPkt.getAddress();

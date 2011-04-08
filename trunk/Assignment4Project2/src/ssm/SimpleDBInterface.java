@@ -5,12 +5,9 @@ package ssm;
  *
  */
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.simpledb.AmazonSimpleDB;
 import com.amazonaws.services.simpledb.AmazonSimpleDBClient;
@@ -18,9 +15,7 @@ import com.amazonaws.services.simpledb.model.Attribute;
 import com.amazonaws.services.simpledb.model.BatchPutAttributesRequest;
 import com.amazonaws.services.simpledb.model.CreateDomainRequest;
 import com.amazonaws.services.simpledb.model.DeleteAttributesRequest;
-import com.amazonaws.services.simpledb.model.DeleteDomainRequest;
 import com.amazonaws.services.simpledb.model.Item;
-import com.amazonaws.services.simpledb.model.PutAttributesRequest;
 import com.amazonaws.services.simpledb.model.ReplaceableAttribute;
 import com.amazonaws.services.simpledb.model.ReplaceableItem;
 import com.amazonaws.services.simpledb.model.SelectRequest;
@@ -59,9 +54,9 @@ public class SimpleDBInterface {
 		}
 	}
 	
-	public Item getMember(String name, String port)
+	public Item getMember(String ip, int port)
 	{ 
-		String selectExpression = "select * from `" + domainName + "` where Name = \'"+ name +"\' AND Port = \'" + port +"\'";
+		String selectExpression = "select * from `" + domainName + "` where Name = \'"+ ip +"\' AND Port = \'" + port +"\'";
         System.out.println("Selecting: " + selectExpression + "\n");
         SelectRequest selectRequest = new SelectRequest(selectExpression);
         for (Item item : sdb.select(selectRequest).getItems()) {
@@ -97,34 +92,31 @@ public class SimpleDBInterface {
         List<Item> items = sdb.select(selectRequest).getItems();
         Members members = new Members();
         for (Item item : items) {
-        	String hostName = "";
+        	String ip = "";
         	int port = -1;
 			List<Attribute> attributes = item.getAttributes();
 			for (Attribute attribute : attributes) {
 				if(attribute.getName().equalsIgnoreCase(NAME))
-					hostName = attribute.getValue();
+					ip = attribute.getValue();
 				else if(attribute.getName().equalsIgnoreCase(PORT))
 					port = Integer.parseInt(attribute.getValue());
 			}
-			InetSocketAddress socketAddress = new InetSocketAddress(hostName, port);
-			Member member = new Member(socketAddress);
+			Member member = new Member(ip, port);
 			members.add(member);
 		}
         return members;
 	}
 	
-	public boolean addMember(InetSocketAddress socketAddress)
+	public boolean addMember(String ip, int port)
 	{
 		serial++;
-		String name = socketAddress.getHostName();
-		String port = socketAddress.getPort() + "";
 		List<ReplaceableItem> sampleData = new ArrayList<ReplaceableItem>();
 		boolean added = false;
-        if(getMember(name, port)==null)
+        if(getMember(ip, port)==null)
         {
         	sampleData.add(new ReplaceableItem(ITEM + serial).withAttributes(
-                    new ReplaceableAttribute(NAME, name, false),
-                    new ReplaceableAttribute(PORT, port, false)));
+                    new ReplaceableAttribute(NAME, ip, false),
+                    new ReplaceableAttribute(PORT, port+"", false)));
 
     		sdb.batchPutAttributes(new BatchPutAttributesRequest(domainName, sampleData));
     		added = true;
@@ -151,19 +143,17 @@ public class SimpleDBInterface {
         return added;
 	}
 */
-	public boolean removeMember(InetSocketAddress socketAddress)
+	public boolean removeMember(String ip, int port)
 	{
 		serial++;
-		String name = socketAddress.getHostName();
-		String port = socketAddress.getPort() + "";
 		List<ReplaceableItem> sampleData = new ArrayList<ReplaceableItem>();
-		Item item = getMember(name, port);
+		Item item = getMember(ip, port);
 		boolean removed = false;
         if( item !=null)
         {
         	sampleData.add(new ReplaceableItem(ITEM + serial).withAttributes(
-                    new ReplaceableAttribute(NAME, name, false),
-                    new ReplaceableAttribute(PORT, port, false)));
+                    new ReplaceableAttribute(NAME, ip, false),
+                    new ReplaceableAttribute(PORT, port+"", false)));
 
         	 sdb.deleteAttributes(new DeleteAttributesRequest(domainName, item.getName()));
         	 

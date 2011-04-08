@@ -82,7 +82,7 @@ public class Operation {
 		String msgString = opString.substring(msgIndex);
 		
 		if(opCodeStr.equalsIgnoreCase(OpCode.PING.toString())) {
-			Message message = new Ping(msgString);
+			Message message = new Ping();
 			return new Operation(callId, OpCode.PING, error, errorMsg, message);
 		}
 		else if (opCodeStr.equalsIgnoreCase(OpCode.GET.toString())) {
