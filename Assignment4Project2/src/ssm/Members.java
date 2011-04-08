@@ -1,5 +1,6 @@
 package ssm;
 
+import java.net.InetSocketAddress;
 import java.util.Vector;
 
 public class Members {
@@ -46,9 +47,10 @@ public class Members {
 		Members members = new Members();
 		String[] strings = locationString.split(LOCATION_SEPARATOR);
 		for(int l = 0; l < strings.length; l=l+2) {
-			String ipAddress = strings[l];
+			String hostname = strings[l];
 			int port = Integer.parseInt(strings[l+1]);
-			Member member = new Member(ipAddress, port);
+			InetSocketAddress socket = new InetSocketAddress(hostname, port);
+			Member member = new Member(socket);
 			members.add(member);
 		}
 		return members;
@@ -58,7 +60,8 @@ public class Members {
 		StringBuffer buffer = new StringBuffer();
 		for (int m = 0; m < size(); m++) {
 			Member member = members.get(m);
-			buffer.append(member.getIpAddress() + LOCATION_SEPARATOR + member.getPort());
+			InetSocketAddress socket = member.getSocket();
+			buffer.append(socket.getHostName()+ LOCATION_SEPARATOR + socket.getPort());
 			if(m < (size()-1))
 				buffer.append(LOCATION_SEPARATOR);
 		}

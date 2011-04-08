@@ -8,6 +8,7 @@ import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.HashSet;
@@ -43,8 +44,8 @@ public class SSMStub {
 
 			byte[] outBuf = operation.toString().getBytes(); 
 			for (Member member : members.getMembers()) {
-				InetSocketAddress socketAddress = new InetSocketAddress(member.getIpAddress(), member.getPort());
-				DatagramPacket sendPkt = new DatagramPacket(outBuf, Constants.DATAGRAM_SIZE, socketAddress);
+				DatagramPacket sendPkt = new DatagramPacket(outBuf, 
+						Math.min(outBuf.length, Constants.DATAGRAM_SIZE), member.getSocket());
 				rpcSocket.send(sendPkt);
 			}
 
@@ -96,8 +97,7 @@ public class SSMStub {
 
 			byte[] outBuf = operation.toString().getBytes(); 
 			for (Member member : members.getMembers()) {
-				InetSocketAddress socketAddress = new InetSocketAddress(member.getIpAddress(), member.getPort());
-				DatagramPacket sendPkt = new DatagramPacket(outBuf, Constants.DATAGRAM_SIZE, socketAddress);
+				DatagramPacket sendPkt = new DatagramPacket(outBuf, Constants.DATAGRAM_SIZE, member.getSocket());
 				rpcSocket.send(sendPkt);
 			}
 
@@ -168,8 +168,7 @@ public class SSMStub {
 				if(!setW.contains(i))
 					continue;
 				Member member = members.get(i);
-				InetSocketAddress socketAddress = new InetSocketAddress(member.getIpAddress(), member.getPort());
-				DatagramPacket sendPkt = new DatagramPacket(outBuf, Constants.DATAGRAM_SIZE, socketAddress);
+				DatagramPacket sendPkt = new DatagramPacket(outBuf, Constants.DATAGRAM_SIZE, member.getSocket());
 				rpcSocket.send(sendPkt);
 			}
 
@@ -185,7 +184,8 @@ public class SSMStub {
 					operationIn = Operation.fromString(new String(recvPkt.getData()));
 					
 					if(!operation.isError() && operationIn.getCallId() == callId) {
-						Member member = new Member(recvPkt.getAddress().toString(), recvPkt.getPort());
+						SocketAddress socketAddress = recvPkt.getSocketAddress();
+						Member member = new Member((InetSocketAddress)socketAddress);
 						replied.add(member);
 					}
 				} catch(SocketTimeoutException e) {

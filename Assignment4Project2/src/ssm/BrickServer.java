@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.HashMap;
 
@@ -16,20 +18,23 @@ public class BrickServer implements Runnable {
 	byte[] buffer;
 	private HashMap<String, SessionInfo> sessionMap;
 	public static String INVALID_VERSION = "Invalid Version found";
-	private int port;
+	private InetSocketAddress socket;
 
 	public BrickServer(HashMap<String, SessionInfo> sessionMap) {
 		this.sessionMap = sessionMap;
 		try {
 			rpcSocket = new DatagramSocket();
-			port = rpcSocket.getLocalPort();
+			SocketAddress tmpSocket = rpcSocket.getLocalSocketAddress();
+			if(tmpSocket instanceof InetSocketAddress) {
+				socket = (InetSocketAddress)tmpSocket;
+			}
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public int getPort() {
-		return port;
+	public InetSocketAddress getSocket() {
+		return socket;
 	}
 
 	@Override
@@ -142,5 +147,4 @@ public class BrickServer implements Runnable {
 		Operation operationOut = computeResponseOperation(operation);
 		return operationOut.toString().getBytes();
 	}
-
 }
