@@ -70,12 +70,14 @@ public class GMClient implements Runnable {
 				e.printStackTrace();
 			}
 			
+			SimpleDBInterface instance = SimpleDBInterface.getInstance();
 			if(!found) {
-				dbMembers.add(me);
+				instance.addMember(me.getIpAddress(), me.getPort()+"");
 				modified = true;
 			}
 			if(timeout) {
 				dbMembers.remove(testMember);
+				instance.removeMember(testMember.getIpAddress(), testMember.getPort()+"");
 				modified = true;
 			}
 			

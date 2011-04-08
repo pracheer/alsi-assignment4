@@ -29,8 +29,9 @@ public class SimpleDBInterface {
 	
 	AmazonSimpleDB sdb;
 	static SimpleDBInterface instance = new SimpleDBInterface();
-	String domainName = "CS5300Proj1";
+	String domainName = "CS5300Proj1AbhiHim";
 	int serial = 0;
+	
 	SimpleDBInterface()
 	{
 		try {
@@ -76,6 +77,27 @@ public class SimpleDBInterface {
         	return null;
 	}
 	
+	public Item getMembers()
+	{ 
+		String selectExpression = "select * from `" + domainName + "`";
+        System.out.println("Selecting: " + selectExpression + "\n");
+        SelectRequest selectRequest = new SelectRequest(selectExpression);
+        for (Item item : sdb.select(selectRequest).getItems()) {
+            System.out.println("  Item");
+            System.out.println("    Name: " + item.getName());
+            for (Attribute attribute : item.getAttributes()) {
+                System.out.println("      Attribute");
+                System.out.println("        Name:  " + attribute.getName());
+                System.out.println("        Value: " + attribute.getValue());
+            }
+        }
+        List<Item> items = sdb.select(selectRequest).getItems();
+        if(items.size()>0)
+        	return items.get(0);
+        else
+        	return null;
+	}
+	
 	public boolean addMember(String name, String port)
 	{
 		serial++;
@@ -93,6 +115,25 @@ public class SimpleDBInterface {
         return added;
 	}
 
+/*	public boolean addAll(Members members)
+	{
+		serial++;
+		List<ReplaceableItem> sampleData = new ArrayList<ReplaceableItem>();
+		boolean added = false;
+        if(getMember(name, port)!=null)
+        {
+        	for (Member member : members) {
+        		sampleData.add(new ReplaceableItem("Item_" + serial).withAttributes(
+        				new ReplaceableAttribute("Name", member.getIpAddress(), false),
+        				new ReplaceableAttribute("Port", port, false)));
+			}
+
+    		sdb.batchPutAttributes(new BatchPutAttributesRequest(domainName, sampleData));
+    		added = true;
+        }
+        return added;
+	}
+*/
 	public boolean removeMember(String name, String port)
 	{
 		serial++;
