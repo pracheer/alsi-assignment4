@@ -168,7 +168,7 @@ public class SSMStub {
 					continue;
 				Member member = members.get(i);
 				InetAddress address = InetAddress.getByName(member.getIp());
-				DatagramPacket sendPkt = new DatagramPacket(outBuf, Constants.DATAGRAM_SIZE, address, member.getPort());
+				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length, address, member.getPort());
 				rpcSocket.send(sendPkt);
 			}
 
