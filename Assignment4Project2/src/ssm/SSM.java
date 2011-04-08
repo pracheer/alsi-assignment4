@@ -137,7 +137,7 @@ public class SSM extends HttpServlet {
 			// write to W members.
 			synchronized (members) {
 				Constants.W = Math.min(1, members.size()+1);
-				Constants.WQ = Math.max(1, Constants.W/2+1);
+				Constants.WQ = Constants.W;
 				System.err.println("Changed Constants.W to "+ Constants.W + " and Constants.WQ to " + Constants.WQ);
 				wMembers = ssmStub.put(sessionInfo.getSessionId(), sessionInfo.getVersion(), members, 
 						Constants.W-1, Constants.WQ-1, value);
