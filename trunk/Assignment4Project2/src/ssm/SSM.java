@@ -36,7 +36,7 @@ public class SSM extends HttpServlet {
 
 	private Members members;
 
-	private InetAddress myIPAddress;
+	private String myIPAddress;
 
 	private Member me;
 
@@ -52,14 +52,14 @@ public class SSM extends HttpServlet {
 		super.init();
 
 		try {
-			myIPAddress = InetAddress.getLocalHost();
+			myIPAddress = new String(InetAddress.getLocalHost().getAddress());
 
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
 		sessionMap = new HashMap<String, SessionInfo>();
 		BrickServer rpcServer = new  BrickServer(sessionMap);
-		me = new Member(myIPAddress.toString(), rpcServer.getPort());
+		me = new Member(rpcServer.getSocket());
 
 		Thread server = new Thread(rpcServer);
 		server.start();

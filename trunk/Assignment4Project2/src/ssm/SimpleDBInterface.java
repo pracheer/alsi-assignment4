@@ -5,6 +5,7 @@ package ssm;
  *
  */
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class SimpleDBInterface {
 	
 	private static final String ITEM = "Item_";
 	private static final String PORT = "Port";
-	private static final String NAME = "IPAddress";
+	private static final String NAME = "Hostname";
 	AmazonSimpleDB sdb;
 	static SimpleDBInterface instance = new SimpleDBInterface();
 	String domainName = "CS5300Proj1AbhiHim";
@@ -96,27 +97,30 @@ public class SimpleDBInterface {
         List<Item> items = sdb.select(selectRequest).getItems();
         Members members = new Members();
         for (Item item : items) {
-        	String ipAddress = "";
+        	String hostName = "";
         	int port = -1;
 			List<Attribute> attributes = item.getAttributes();
 			for (Attribute attribute : attributes) {
 				if(attribute.getName().equalsIgnoreCase(NAME))
-					ipAddress = attribute.getValue();
+					hostName = attribute.getValue();
 				else if(attribute.getName().equalsIgnoreCase(PORT))
 					port = Integer.parseInt(attribute.getValue());
 			}
-			Member member = new Member(ipAddress, port);
+			InetSocketAddress socketAddress = new InetSocketAddress(hostName, port);
+			Member member = new Member(socketAddress);
 			members.add(member);
 		}
         return members;
 	}
 	
-	public boolean addMember(String name, String port)
+	public boolean addMember(InetSocketAddress socketAddress)
 	{
 		serial++;
+		String name = socketAddress.getHostName();
+		String port = socketAddress.getPort() + "";
 		List<ReplaceableItem> sampleData = new ArrayList<ReplaceableItem>();
 		boolean added = false;
-        if(getMember(name, port)!=null)
+        if(getMember(name, port)==null)
         {
         	sampleData.add(new ReplaceableItem(ITEM + serial).withAttributes(
                     new ReplaceableAttribute(NAME, name, false),
@@ -147,9 +151,11 @@ public class SimpleDBInterface {
         return added;
 	}
 */
-	public boolean removeMember(String name, String port)
+	public boolean removeMember(InetSocketAddress socketAddress)
 	{
 		serial++;
+		String name = socketAddress.getHostName();
+		String port = socketAddress.getPort() + "";
 		List<ReplaceableItem> sampleData = new ArrayList<ReplaceableItem>();
 		Item item = getMember(name, port);
 		boolean removed = false;

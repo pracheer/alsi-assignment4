@@ -52,10 +52,7 @@ public class GMClient implements Runnable {
 					int rand = randomGenerator.nextInt(dbMembers.size());
 					byte[] buf = new byte[256];
 					Member testMember = dbMembers.get(rand);
-					InetSocketAddress socketAddress = new InetSocketAddress(
-							testMember.getIpAddress(), testMember.getPort());
-					DatagramPacket packet = new DatagramPacket(buf, buf.length,
-							socketAddress);
+					DatagramPacket packet = new DatagramPacket(buf, buf.length, testMember.getSocket());
 					try {
 
 						rpcSocket.send(packet);
@@ -75,13 +72,12 @@ public class GMClient implements Runnable {
 					
 					if (timeout) {
 						dbMembers.remove(testMember);
-						instance.removeMember(testMember.getIpAddress(),
-								testMember.getPort() + "");
+						instance.removeMember(testMember.getSocket());
 					}
 				}
 				
 				if (!found) {
-					instance.addMember(me.getIpAddress(), me.getPort() + "");
+					instance.addMember(me.getSocket());
 				}
 				
 				int sleepTime = Constants.roundTime/2 + randomGenerator.nextInt(Constants.roundTime);
