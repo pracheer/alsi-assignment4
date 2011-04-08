@@ -22,7 +22,7 @@ public class BrickServer implements Runnable {
 		this.sessionMap = sessionMap;
 		try {
 			rpcSocket = new DatagramSocket();
-			port = rpcSocket.getPort();
+			port = rpcSocket.getLocalPort();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}

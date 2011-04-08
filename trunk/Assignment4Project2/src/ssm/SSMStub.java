@@ -144,8 +144,9 @@ public class SSMStub {
 	 */
 	public Members put(String sessionId, int version, Members members,
 			int W, int WQ, Value value) {
-		
-		if(W < WQ || WQ > members.size()) {
+		if(W == 0)
+			return new Members();
+		if(W < WQ || WQ > members.size() || W > members.size()) {
 			System.err.println("W="+W + " WQ="+WQ + " members.size()="+members.size());
 		}
 		

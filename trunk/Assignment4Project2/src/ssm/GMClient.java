@@ -37,52 +37,59 @@ public class GMClient implements Runnable {
 	public void run() {
 
 		try {
-			Random randomGenerator = new Random();
-			DatagramSocket rpcSocket = null;
-			rpcSocket = new DatagramSocket();
+			while (true) {
+				Random randomGenerator = new Random();
+				DatagramSocket rpcSocket = null;
+				rpcSocket = new DatagramSocket();
 
-			// keep track if dbmembers have been modified.
-			boolean modified = false;
-			// getmembers for simpleDB.
-			Members dbMembers = new Members();
-			boolean found = dbMembers.search(me);
-			int rand = randomGenerator.nextInt(dbMembers.size());
+				// getmembers for simpleDB.
+				SimpleDBInterface instance = SimpleDBInterface.getInstance();
+				Members dbMembers = instance.getMembers();
+				boolean found = false;
+				boolean timeout = false;
+				if(dbMembers.size()!=0) {
+					found = dbMembers.search(me);
+					int rand = randomGenerator.nextInt(dbMembers.size());
+					byte[] buf = new byte[256];
+					Member testMember = dbMembers.get(rand);
+					InetSocketAddress socketAddress = new InetSocketAddress(
+							testMember.getIpAddress(), testMember.getPort());
+					DatagramPacket packet = new DatagramPacket(buf, buf.length,
+							socketAddress);
+					try {
 
-			boolean timeout = false;
-			byte[] buf = new byte[256];
-			Member testMember = dbMembers.get(rand);
-			InetSocketAddress socketAddress = new InetSocketAddress(testMember.getIpAddress(), testMember.getPort());
-			DatagramPacket packet = new DatagramPacket(buf, buf.length, socketAddress);
-			try {
+						rpcSocket.send(packet);
+
+						rpcSocket.setSoTimeout(Constants.TIMEOUT);
+
+						DatagramPacket recvPkt = new DatagramPacket(buf, buf.length);
+						rpcSocket.receive(recvPkt);
+
+						timeout = false;
+
+					} catch (SocketTimeoutException e) {
+						timeout = true;
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+					if (timeout) {
+						dbMembers.remove(testMember);
+						instance.removeMember(testMember.getIpAddress(),
+								testMember.getPort() + "");
+					}
+				}
 				
-			rpcSocket.send(packet);
-			
-			rpcSocket.setSoTimeout(Constants.TIMEOUT);
-			
-			DatagramPacket recvPkt = new DatagramPacket(buf, buf.length);
-			rpcSocket.receive(recvPkt);
-			
-			timeout = false;
-			
-			} catch(SocketTimeoutException e) {
-				timeout = true;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			SimpleDBInterface instance = SimpleDBInterface.getInstance();
-			if(!found) {
-				instance.addMember(me.getIpAddress(), me.getPort()+"");
-				modified = true;
-			}
-			if(timeout) {
-				dbMembers.remove(testMember);
-				instance.removeMember(testMember.getIpAddress(), testMember.getPort()+"");
-				modified = true;
-			}
-			
-			if(modified) {
-				// update dbMembers to simpleDB
+				if (!found) {
+					instance.addMember(me.getIpAddress(), me.getPort() + "");
+				}
+				
+				int sleepTime = Constants.roundTime/2 + randomGenerator.nextInt(Constants.roundTime);
+				try {
+					Thread.sleep(sleepTime);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 
 		} catch (SocketException e) {

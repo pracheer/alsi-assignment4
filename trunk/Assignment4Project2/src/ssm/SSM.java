@@ -114,34 +114,36 @@ public class SSM extends HttpServlet {
 						}
 
 						// TODO: check in local cache if data present.
-						Value value = ssmStub.get(sessionId, version, members);
+						Value value = ssmStub.get(sessionId, version, locationMembers);
 						version++;
-						
+
 						if(value == null)
 							value = new Value(1);
 						else
 							value.setCount(value.getCount()+1);
-						
+
 						if(request.getParameter("replace")!=null) {
 							String message = request.getParameter("message");
 							value.setMsg(message);
 						}
-						
+
 						sessionInfo = new SessionInfo(sessionId, version, value);
 					}
 				}
 			}
 
 			sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
-			
+
 			Value value = sessionInfo.getValue();
+			
 			// write to W members.
 			Members wMembers = ssmStub.put(sessionInfo.getSessionId(), sessionInfo.getVersion(), members, 
 					Constants.W-1, Constants.WQ-1, value);
+			wMembers.add(me);
 			String cookieVal = sessionInfo.getSessionId()
-					+ SEPARATOR + sessionInfo.getVersion()
-					+ SEPARATOR + wMembers.toString();
-			
+			+ SEPARATOR + sessionInfo.getVersion()
+			+ SEPARATOR + wMembers.toString();
+
 			if(cookieVal.length() > 1024) {
 				out.write(handleError("Cookie size exceeded."));
 				return;
@@ -168,6 +170,7 @@ public class SSM extends HttpServlet {
 			}
 		}
 	}
+
 
 	private String handleError(String str) {
 		StringBuffer buf = new StringBuffer();

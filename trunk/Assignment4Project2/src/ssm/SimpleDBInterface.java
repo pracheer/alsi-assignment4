@@ -27,6 +27,9 @@ import com.amazonaws.services.simpledb.model.SelectRequest;
 
 public class SimpleDBInterface {
 	
+	private static final String ITEM = "Item_";
+	private static final String PORT = "Port";
+	private static final String NAME = "IPAddress";
 	AmazonSimpleDB sdb;
 	static SimpleDBInterface instance = new SimpleDBInterface();
 	String domainName = "CS5300Proj1AbhiHim";
@@ -38,12 +41,11 @@ public class SimpleDBInterface {
 			sdb = new AmazonSimpleDBClient(new PropertiesCredentials(
 					SimpleDBInterface.class.getResourceAsStream("AwsCredentials.properties")));
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		boolean domainExists = false;
-		for (String domainName : sdb.listDomains().getDomainNames()) {
-            if(domainName.equals(domainName))
+		for (String domainNameE : sdb.listDomains().getDomainNames()) {
+            if(domainNameE.equals(domainName))
             {
             	domainExists = true;
             	break;
@@ -77,7 +79,7 @@ public class SimpleDBInterface {
         	return null;
 	}
 	
-	public Item getMembers()
+	public Members getMembers()
 	{ 
 		String selectExpression = "select * from `" + domainName + "`";
         System.out.println("Selecting: " + selectExpression + "\n");
@@ -92,10 +94,21 @@ public class SimpleDBInterface {
             }
         }
         List<Item> items = sdb.select(selectRequest).getItems();
-        if(items.size()>0)
-        	return items.get(0);
-        else
-        	return null;
+        Members members = new Members();
+        for (Item item : items) {
+        	String ipAddress = "";
+        	int port = -1;
+			List<Attribute> attributes = item.getAttributes();
+			for (Attribute attribute : attributes) {
+				if(attribute.getName().equalsIgnoreCase(NAME))
+					ipAddress = attribute.getValue();
+				else if(attribute.getName().equalsIgnoreCase(PORT))
+					port = Integer.parseInt(attribute.getValue());
+			}
+			Member member = new Member(ipAddress, port);
+			members.add(member);
+		}
+        return members;
 	}
 	
 	public boolean addMember(String name, String port)
@@ -105,9 +118,9 @@ public class SimpleDBInterface {
 		boolean added = false;
         if(getMember(name, port)!=null)
         {
-        	sampleData.add(new ReplaceableItem("Item_" + serial).withAttributes(
-                    new ReplaceableAttribute("Name", name, false),
-                    new ReplaceableAttribute("Port", port, false)));
+        	sampleData.add(new ReplaceableItem(ITEM + serial).withAttributes(
+                    new ReplaceableAttribute(NAME, name, false),
+                    new ReplaceableAttribute(PORT, port, false)));
 
     		sdb.batchPutAttributes(new BatchPutAttributesRequest(domainName, sampleData));
     		added = true;
@@ -142,9 +155,9 @@ public class SimpleDBInterface {
 		boolean removed = false;
         if( item !=null)
         {
-        	sampleData.add(new ReplaceableItem("Item_" + serial).withAttributes(
-                    new ReplaceableAttribute("Name", name, false),
-                    new ReplaceableAttribute("Port", port, false)));
+        	sampleData.add(new ReplaceableItem(ITEM + serial).withAttributes(
+                    new ReplaceableAttribute(NAME, name, false),
+                    new ReplaceableAttribute(PORT, port, false)));
 
         	 sdb.deleteAttributes(new DeleteAttributesRequest(domainName, item.getName()));
         	 
