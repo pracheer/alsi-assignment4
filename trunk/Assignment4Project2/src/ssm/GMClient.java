@@ -58,14 +58,15 @@ public class GMClient implements Runnable {
 					InetAddress address = InetAddress.getByName(testMember.getIp());
 					Operation operation = new Operation(callId, OpCode.PING, new Ping());
 					byte[] buf = operation.toString().getBytes();
-					DatagramPacket packet = new DatagramPacket(buf, Constants.DATAGRAM_SIZE, address, testMember.getPort());
+					DatagramPacket packet = new DatagramPacket(buf, buf.length, address, testMember.getPort());
 					try {
 
 						rpcSocket.send(packet);
 
 						rpcSocket.setSoTimeout(Constants.TIMEOUT);
 
-						DatagramPacket recvPkt = new DatagramPacket(buf, buf.length);
+						buf = new byte[Constants.DATAGRAM_SIZE];
+						DatagramPacket recvPkt = new DatagramPacket(buf, Constants.DATAGRAM_SIZE);
 						rpcSocket.receive(recvPkt);
 
 						timeout = false;

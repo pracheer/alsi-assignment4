@@ -53,16 +53,15 @@ public class BrickServer implements Runnable {
 			while(true) {
 				byte[] inBuf = new byte[Constants.DATAGRAM_SIZE];
 				DatagramPacket recvPkt = new DatagramPacket(inBuf, inBuf.length);
+				
 				rpcSocket.receive(recvPkt);
-				InetAddress returnAddr = recvPkt.getAddress();
-				int returnPort = recvPkt.getPort();
-				// here inBuf contains the callID and operationCode
-
+				
 				byte[] outBuf = computeResponse(recvPkt.getData());
-				// here outBuf should contain the callID
 				DatagramPacket sendPkt = new DatagramPacket(outBuf, outBuf.length,
-						returnAddr, returnPort);
+						recvPkt.getAddress(), recvPkt.getPort());
+				
 				rpcSocket.send(sendPkt);
+				
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

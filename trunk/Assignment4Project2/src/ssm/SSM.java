@@ -123,15 +123,22 @@ public class SSM extends HttpServlet {
 			}
 
 			SessionInfo oldSession = sessionMap.get(sessionInfo.getSessionId());
-			synchronized (oldSession) {
+			if(oldSession!=null) {
+				synchronized (oldSession) {
+					sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
+				}
+			} else {
 				sessionMap.put(sessionInfo.getSessionId(), sessionInfo);
 			}
 
 			Value value = sessionInfo.getValue();
 
+			Members wMembers;
 			// write to W members.
-			Members wMembers = ssmStub.put(sessionInfo.getSessionId(), sessionInfo.getVersion(), members, 
-					Constants.W-1, Constants.WQ-1, value);
+			synchronized (members) {
+				wMembers = ssmStub.put(sessionInfo.getSessionId(), sessionInfo.getVersion(), members, 
+						Constants.W-1, Constants.WQ-1, value);
+			}
 			wMembers.add(me);
 			String cookieVal = sessionInfo.getSessionId()
 			+ SEPARATOR + sessionInfo.getVersion()

@@ -24,7 +24,7 @@ public class GeneralMsg implements Message{
 
 	public static GeneralMsg fromString(String string) {
 		String[] strings = string.split(SEPARATOR);
-		boolean valuePresent = Boolean.parseBoolean(strings[3]);
+		boolean valuePresent = Boolean.parseBoolean(strings[2]);
 		if(valuePresent)
 			return new GeneralMsg(strings[0], Integer.parseInt(strings[1]), Value.fromString(strings[3]));
 		else

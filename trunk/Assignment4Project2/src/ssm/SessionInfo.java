@@ -17,8 +17,7 @@ public class SessionInfo {
 	private long timestamp;
 	private Value value;
 	
-	public static final long SESSION_VALIDITY = 60*1000; // 1 minute
-
+	
 	private void incrementVersion() {
 		version = version + 1;
 	}
@@ -26,7 +25,7 @@ public class SessionInfo {
 	public void setValue(Value value) {
 		this.value = value;
 		incrementVersion();
-		timestamp = System.currentTimeMillis() + SESSION_VALIDITY; 
+		timestamp = System.currentTimeMillis() + Constants.SESSION_VALIDITY; 
 	}
 	
 	public static SessionInfo create(Value value) {
@@ -56,7 +55,7 @@ public class SessionInfo {
 		this.sessionId = sessionId;
 		this.version = version;
 		this.value = value;
-		timestamp = System.currentTimeMillis() + SESSION_VALIDITY; 
+		timestamp = System.currentTimeMillis() + Constants.SESSION_VALIDITY; 
 	}
 
 	public String getSessionId() {
