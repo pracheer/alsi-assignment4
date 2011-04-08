@@ -40,7 +40,7 @@ public class Value {
 	}
 	
 	public String toString() {
-		return count + SEPARATOR + msg;
+		return count + SEPARATOR + msg + SEPARATOR;
 	}
 	
 	public static Value fromString(String string) {
